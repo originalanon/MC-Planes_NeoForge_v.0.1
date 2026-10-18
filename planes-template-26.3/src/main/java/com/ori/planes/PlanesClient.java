@@ -1,6 +1,21 @@
+/**
+ * @ Author: OriginalAnon (Lindsay Barton)
+ * @ Create Time: 2026-10-18 06:19:19
+ * @ Modified by: Your name
+ * @ Modified time: 2026-10-18 06:38:25
+ * @ Description: Main client class for the Planes mod.
+ */
+
+
+
+
 package com.ori.planes;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
+import net.minecraft.network.chat.Component;
+import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -20,6 +35,72 @@ public class PlanesClient {
         // The config screen is accessed by going to the Mods screen > clicking on your mod > clicking on config.
         // Do not forget to add translations for your config options to the en_us.json file.
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+    }
+
+    @SubscribeEvent
+    static void onScreenInit(ScreenEvent.Init.Post event) {
+        if (!(event.getScreen() instanceof CreateWorldScreen screen)) {
+            return;
+        }
+        Button create = null;
+        Button cancel = null;
+        for (var listener : event.getListenersList()) {
+            if (listener instanceof Button button) {
+                if (button.getMessage().equals(Component.translatable("selectWorld.create"))) {
+                    create = button;
+                } else if (button.getMessage().equals(Component.translatable("gui.cancel"))) {
+                    cancel = button;
+                }
+            }
+        }
+        if (create == null || cancel == null) {
+            return;
+        }
+        int left = screen.width / 2 - 154;
+        create.setX(left);
+        create.setWidth(98);
+        cancel.setX(left + 212);
+        cancel.setWidth(98);
+        event.addListener(Button.builder(Component.translatable("planes.menu.open"), button ->
+                Minecraft.getInstance().gui.pushScreenLayer(new PlaneContentScreen(screen)))
+                .bounds(left + 106, create.getY(), 98, 20).build());
+        arrangePlaneButton(screen);
+    }
+
+    @SubscribeEvent
+    static void onScreenRender(ScreenEvent.Render.Pre event) {
+        if (event.getScreen() instanceof CreateWorldScreen screen) {
+            arrangePlaneButton(screen);
+        }
+    }
+
+    private static void arrangePlaneButton(CreateWorldScreen screen) {
+        Button create = null;
+        Button cancel = null;
+        Button planes = null;
+        for (var listener : screen.children()) {
+            if (listener instanceof Button button) {
+                if (button.getMessage().equals(Component.translatable("selectWorld.create"))) {
+                    create = button;
+                } else if (button.getMessage().equals(Component.translatable("gui.cancel"))) {
+                    cancel = button;
+                } else if (button.getMessage().equals(Component.translatable("planes.menu.open"))) {
+                    planes = button;
+                }
+            }
+        }
+        if (create != null && cancel != null && planes != null) {
+            int totalWidth = Math.min(310, screen.width - 16);
+            int buttonWidth = (totalWidth - 16) / 3;
+            int left = (screen.width - totalWidth) / 2;
+            create.setX(left);
+            create.setWidth(buttonWidth);
+            planes.setX(left + buttonWidth + 8);
+            planes.setY(create.getY());
+            planes.setWidth(buttonWidth);
+            cancel.setX(left + (buttonWidth + 8) * 2);
+            cancel.setWidth(buttonWidth);
+        }
     }
 
     @SubscribeEvent
