@@ -2,7 +2,7 @@
  * @ Author: OriginalAnon (Lindsay Barton)
  * @ Create Time: 2026-10-18 06:19:19
  * @ Modified by: Your name
- * @ Modified time: 2026-10-18 06:39:57
+ * @ Modified time: 2026-10-18 12:45:40
  * @ Description: Screen for browsing plane content within the mod; Shows up before world generation. PoC.
  */
 
@@ -40,6 +40,8 @@ final class PlaneContentScreen extends Screen {
 
     @Override
     protected void init() {
+        //Init
+
         int modWidth = Math.min(180, width / 3);
         int detailX = modWidth + 16;
         int detailWidth = width - detailX - 8;
@@ -94,6 +96,11 @@ final class PlaneContentScreen extends Screen {
             contentList.addRow(new BrowserRow(Component.translatable("planes.menu.empty").getString(),
                     Component.empty(), () -> {}));
         }
+    }
+
+    @Override
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+       graphics.fill(0, 0, width, height, 0xD9000000);
     }
 
     @Override
