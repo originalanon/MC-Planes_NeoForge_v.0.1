@@ -1,0 +1,13 @@
+{
+  "itemGroup.planes": "Example Mod Tab",
+  "block.planes.example_block": "Example Block",
+  "item.planes.example_item": "Example Item",
+
+  "planes.configuration.title": "Planes Configs",
+  "planes.configuration.section.planes.common.toml": "Planes Configs",
+  "planes.configuration.section.planes.common.toml.title": "Planes Configs",
+  "planes.configuration.items": "Item List",
+  "planes.configuration.logDirtBlock": "Log Dirt Block",
+  "planes.configuration.magicNumberIntroduction": "Magic Number Text",
+  "planes.configuration.magicNumber": "Magic Number"
+}
