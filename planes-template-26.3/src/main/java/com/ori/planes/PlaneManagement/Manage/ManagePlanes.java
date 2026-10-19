@@ -2,7 +2,7 @@
  * @ Author: Lindsay Barton
  * @ Create Time: 2026-10-18 12:52:42
  * @ Modified by: Your name
- * @ Modified time: 2026-10-19 09:43:44
+ * @ Modified time: 2026-10-19 11:22:00
  * @ Description: Class for managing planes within the mod.
  */
 
@@ -23,6 +23,7 @@ import com.ori.planes.PlaneManagement.PlaneDefinitionStore;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.network.chat.CommonComponents;
@@ -33,6 +34,7 @@ public class ManagePlanes extends Screen {
 	private final List<PlaneDefinition> planes;
 	private UUID selectedId;
 	private Button manageButton;
+	private Button deleteButton;
 
 	public ManagePlanes(CreateWorldScreen worldCreation, List<PlaneDefinition> planes) {
 		super(Component.translatable("planes.manager.title"));
@@ -42,17 +44,27 @@ public class ManagePlanes extends Screen {
 
 	@Override
 	protected void init() {
-		int buttonWidth = Math.min(150, (width - 24) / 2);
-		int left = width / 2 - buttonWidth - 4;
+		int buttonWidth = Math.min(150, (width - 32) / 3);
+		int left = (width - buttonWidth * 3 - 16) / 2;
 		addRenderableWidget(Button.builder(Component.translatable("planes.menu.create_plane"), button -> openEditor(null))
 				.bounds(left, height - 52, buttonWidth, 20).build());
 		manageButton = addRenderableWidget(Button.builder(Component.translatable("planes.menu.manage_planes"), button -> {
 			planes.stream().filter(plane -> plane.id().equals(selectedId)).findFirst().ifPresent(this::openEditor);
-		}).bounds(width / 2 + 4, height - 52, buttonWidth, 20).build());
-		manageButton.active = planes.stream().anyMatch(plane -> plane.id().equals(selectedId));
+		}).bounds(left + buttonWidth + 8, height - 52, buttonWidth, 20).build());
+		
+		deleteButton = addRenderableWidget(Button.builder(Component.translatable("planes.menu.delete_plane"), button -> {
+			if (selectedId != null) {
+				confirmDeletePlane(selectedId);
+			}
+		}).bounds(left + (buttonWidth + 8) * 2, height - 52, buttonWidth, 20).build());
+
+		boolean hasSelection = planes.stream().anyMatch(plane -> plane.id().equals(selectedId));
+		manageButton.active = hasSelection;
+		deleteButton.active = hasSelection;
 		addRenderableWidget(Button.builder(CommonComponents.GUI_BACK, button -> onClose())
 				.bounds(width / 2 - buttonWidth / 2, height - 28, buttonWidth, 20).build());
 		var list = addRenderableWidget(new PlaneList());
+
 		for (var plane : planes) {
 			var row = new PlaneRow(plane);
 			list.addPlane(row);
@@ -62,6 +74,7 @@ public class ManagePlanes extends Screen {
 		}
 	}
 
+	//Opens the editor for the currently selected plane
 	private void openEditor(PlaneDefinition existing) {
 		minecraft.gui.pushScreenLayer(new CreateNewPlane(worldCreation, existing,
 				name -> planes.stream().noneMatch(plane -> plane.name().equalsIgnoreCase(name)
@@ -85,13 +98,45 @@ public class ManagePlanes extends Screen {
 						planes.set(index, saved);
 					}
 					selectedId = saved.id();
+
 					rebuildWidgets();
 					return true;
 				}));
 	}
 
-	//Method to delete a plane by its ID
+	private void confirmDeletePlane(UUID planeId) {
+		PlaneDefinition plane = planes.stream().filter(entry -> entry.id().equals(planeId)).findFirst().orElse(null);
+		if (plane == null) {
+			return;
+		}
+
+		//Confirm delete plane
+		minecraft.gui.pushScreenLayer(new ConfirmScreen(confirmed -> {
+
+			minecraft.gui.popScreenLayer();
+			if (confirmed) {
+				deletePlane(planeId);
+			}
+		}, Component.translatable("planes.menu.delete_plane.confirm"),
+				Component.translatable("planes.menu.delete_plane.confirm_message", plane.name())) {
+			@Override
+			public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+				graphics.fill(0, 0, width, height, 0x99000000);
+			}
+		});
+	}
+
 	private void deletePlane(UUID planeId) {
+		try {
+			if (!PlaneDefinitionStore.delete(minecraft.gameDirectory.toPath(), planeId)) {
+				Planes.LOGGER.warn("Plane definition {} was not found on disk; keeping it in the manager", planeId);
+				return;
+			}
+		} catch (IOException exception) {
+			Planes.LOGGER.error("Could not delete plane definition {}", planeId, exception);
+			return;
+		}
+
 		planes.removeIf(plane -> plane.id().equals(planeId));
 		if (selectedId != null && selectedId.equals(planeId)) {
 			selectedId = null;
@@ -135,6 +180,7 @@ public class ManagePlanes extends Screen {
 			super.setSelected(row);
 			selectedId = row == null ? null : row.plane.id();
 			manageButton.active = row != null;
+			deleteButton.active = row != null;
 		}
 	}
 
@@ -161,6 +207,8 @@ public class ManagePlanes extends Screen {
 				graphics.setTooltipForNextFrame(font, getNarration(), mouseX, mouseY);
 			}
 		}
+
+		
 	}
 
 }
