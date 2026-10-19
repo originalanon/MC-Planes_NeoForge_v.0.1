@@ -1,8 +1,8 @@
 {
   "itemGroup.planes": "Example Mod Tab",
   "block.planes.example_block": "Example Block",
-  "item.planes.example_item": "Example Item",
-
+ * @ Modified by: Your name
+ * @ Modified time: 2026-10-18 22:38:11
   "planes.menu.open": "Planes",
   "planes.menu.title": "Planes: Content Catalog",
   "planes.menu.summary": "%s namespaces / %s matching entries",

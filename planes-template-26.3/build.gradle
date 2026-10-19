@@ -1,8 +1,8 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.148'
-    id 'idea'
+ * @ Modified by: Your namev' version '2.0.148'
+ * @ Modified time: 2026-10-18 13:12:43
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -27,6 +27,7 @@ sourceSets.main.resources {
 }
 
 repositories {
+    mavenCentral()
     // Add here additional repositories if required by some of the dependencies below.
 }
 
@@ -111,6 +112,10 @@ configurations {
 }
 
 dependencies {
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
@@ -132,6 +137,10 @@ dependencies {
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
+}
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
