@@ -2,7 +2,7 @@
  * @ Author: OriginalAnon (Lindsay Barton)
  * @ Create Time: 2026-10-18 06:19:19
  * @ Modified by: Your name
- * @ Modified time: 2026-10-18 23:51:06
+ * @ Modified time: 2026-10-19 10:02:30
  * @ Description: Screen for browsing plane content within the mod; Shows up before world generation. PoC.
  */
 
@@ -13,11 +13,11 @@ import java.util.Locale;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import com.ori.planes.PlaneManagement.PlaneDefinition;
 import com.ori.planes.PlaneManagement.PlaneDefinition.ContentKey;
+import com.ori.planes.PlaneManagement.PlaneType;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -44,18 +44,21 @@ public class PlaneContentScreen extends Screen {
     private final UUID planeId;
     private final Set<ContentKey> selectedContent;
     private final Predicate<String> nameAvailable;
-    private final Consumer<PlaneDefinition> onSave;
+        private final Predicate<PlaneDefinition> onSave;
     private String planeName;
+        private PlaneType planeType;
     private Button saveButton;
+        private boolean saveFailed;
 
     protected PlaneContentScreen(CreateWorldScreen parent, PlaneDefinition existing,
-            Predicate<String> nameAvailable, Consumer<PlaneDefinition> onSave) {
+            Predicate<String> nameAvailable, Predicate<PlaneDefinition> onSave) {
         super(Component.translatable(existing == null ? "planes.editor.create" : "planes.editor.edit"));
         this.mods = PlaneContentCatalog.scan(parent.getUiState().getSettings());
         this.selectedMod = mods.stream().filter(mod -> mod.id().equals(Planes.MODID)).findFirst()
                 .orElseGet(() -> mods.isEmpty() ? null : mods.getFirst());
         this.planeId = existing == null ? UUID.randomUUID() : existing.id();
         this.planeName = existing == null ? "" : existing.name();
+        this.planeType = existing == null ? PlaneType.OVERWORLD : existing.type();
         this.selectedContent = new HashSet<>(existing == null ? Set.of() : existing.content());
         this.nameAvailable = nameAvailable;
         this.onSave = onSave;
@@ -110,7 +113,8 @@ public class PlaneContentScreen extends Screen {
         addRenderableWidget(search);
 
 
-        var name = new EditBox(font, 8, 32, width - 16, 20, Component.translatable("planes.editor.name"));
+        int nameWidth = Math.max(120, (width - 24) * 2 / 3);
+        var name = new EditBox(font, 8, 32, nameWidth, 20, Component.translatable("planes.editor.name"));
         name.setMaxLength(64);
         name.setHint(Component.translatable("planes.editor.name"));
         name.setValue(planeName);
@@ -120,12 +124,22 @@ public class PlaneContentScreen extends Screen {
         });
         addRenderableWidget(name);
 
+        int typeX = 16 + nameWidth;
+        int typeWidth = Math.max(100, width - typeX - 8);
+        addRenderableWidget(CycleButton.<PlaneType>builder(
+            value -> Component.translatable("planes.editor.type." + value.name().toLowerCase(Locale.ROOT)), planeType)
+            .withValues(PlaneType.values())
+            .create(typeX, 32, typeWidth, 20, Component.translatable("planes.editor.type"),
+                (button, value) -> planeType = value));
+
 
         int buttonWidth = Math.min(150, (width - 24) / 2);
         saveButton = addRenderableWidget(Button.builder(Component.translatable("planes.editor.save"), button -> {
             if (validName()) {
-                onSave.accept(new PlaneDefinition(planeId, planeName, selectedContent, null));
+            saveFailed = !onSave.test(new PlaneDefinition(planeId, planeName, selectedContent, planeType));
+            if (!saveFailed) {
                 onClose();
+            }
             }
         }).bounds(width / 2 - buttonWidth - 4, height - 28, buttonWidth, 20).build());
         addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> onClose())
@@ -150,31 +164,37 @@ public class PlaneContentScreen extends Screen {
 
     private void refreshContent() {
         contentList.clearRows();
-        String filter = query.toLowerCase(Locale.ROOT).strip();
-        matchingCount = 0;
-        for (var entry : selectedMod == null ? List.<PlaneContentCatalog.Content>of() : selectedMod.entries()) {
-            if ((category.equals("all") || category.equals(entry.category()))
-                    && entry.id().toLowerCase(Locale.ROOT).contains(filter)) {
-                var key = new ContentKey(entry.category(), entry.id());
-                contentList.addRow(new BrowserRow(entry.id(),
-                    Component.translatable("planes.category." + entry.category()), key));
-                matchingCount++;
-            }
+        var entries = matchingEntries();
+        matchingCount = entries.size();
+        for (var entry : entries) {
+            var key = new ContentKey(entry.category(), entry.id());
+            contentList.addRow(new BrowserRow(entry.id(),
+                Component.translatable("planes.category." + entry.category()), key));
         }
         if (matchingCount == 0) {
-                contentList.addRow(new BrowserRow(Component.translatable("planes.menu.empty"),
+            contentList.addRow(new BrowserRow(Component.translatable("planes.menu.empty"),
                     Component.empty(), () -> {}));
         }
     }
 
+    private List<PlaneContentCatalog.Content> matchingEntries() {
+        if (selectedMod == null) {
+            return List.of();
+        }
+        String filter = query.toLowerCase(Locale.ROOT).strip();
+        return selectedMod.entries().stream()
+                .filter(entry -> category.equals("all") || category.equals(entry.category()))
+                .filter(entry -> entry.id().toLowerCase(Locale.ROOT).contains(filter))
+                .toList();
+    }
+
     private void setVisibleContentSelected(boolean selected) {
-        for (var row : contentList.children()) {
-            if (row.contentKey != null) {
-                if (selected) {
-                    selectedContent.add(row.contentKey);
-                } else {
-                    selectedContent.remove(row.contentKey);
-                }
+        for (var entry : matchingEntries()) {
+            var key = new ContentKey(entry.category(), entry.id());
+            if (selected) {
+                selectedContent.add(key);
+            } else {
+                selectedContent.remove(key);
             }
         }
         refreshContent();
@@ -191,6 +211,10 @@ public class PlaneContentScreen extends Screen {
         graphics.centeredText(font, title, width / 2, 8, 0xFFFFFFFF);
         graphics.centeredText(font, Component.translatable("planes.editor.summary", matchingCount, selectedContent.size()),
                 width / 2, 20, 0xFFAAAAAA);
+        if (saveFailed) {
+            graphics.centeredText(font, Component.translatable("planes.editor.save_failed"), width / 2,
+                height - 43, 0xFFFF5555);
+        }
     }
 
     @Override
@@ -232,7 +256,6 @@ public class PlaneContentScreen extends Screen {
         private final Component localizedLabel;
         private final Component detail;
         private final Runnable onSelect;
-        private ContentKey contentKey;
         private Checkbox checkbox;
 
         BrowserRow(String label, Component detail, Runnable onSelect) {
@@ -251,7 +274,6 @@ public class PlaneContentScreen extends Screen {
 
         BrowserRow(String label, Component detail, ContentKey key) {
             this(label, detail, () -> {});
-            this.contentKey = key;
             this.checkbox = Checkbox.builder(Component.empty(), font)
                     .selected(selectedContent.contains(key)).onValueChange((button, selected) -> {
                         if (selected) {

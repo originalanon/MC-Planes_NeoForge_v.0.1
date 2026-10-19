@@ -2,7 +2,7 @@
  * @ Author: OriginalAnon (Lindsay Barton)
  * @ Create Time: 2026-10-18 06:19:19
  * @ Modified by: Your name
- * @ Modified time: 2026-10-18 12:34:09
+ * @ Modified time: 2026-10-19 09:43:48
  * @ Description: Main client class for the Planes mod.
  */
 
@@ -11,6 +11,7 @@
 
 package com.ori.planes;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,7 @@ import java.util.WeakHashMap;
 
 import com.ori.planes.PlaneManagement.Manage.ManagePlanes;
 import com.ori.planes.PlaneManagement.PlaneDefinition;
+import com.ori.planes.PlaneManagement.PlaneDefinitionStore;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
@@ -73,9 +75,18 @@ public class PlanesClient {
         cancel.setWidth(98);
         event.addListener(Button.builder(Component.translatable("planes.menu.open"), button ->
             Minecraft.getInstance().gui.pushScreenLayer(new ManagePlanes(screen,
-                PLANE_DRAFTS.computeIfAbsent(screen, key -> new ArrayList<>()))))
+                PLANE_DRAFTS.computeIfAbsent(screen, key -> loadPlaneDefinitions()))))
                 .bounds(left + 106, create.getY(), 98, 20).build());
         arrangePlaneButton(screen);
+    }
+
+    private static List<PlaneDefinition> loadPlaneDefinitions() {
+        try {
+            return new ArrayList<>(PlaneDefinitionStore.loadAll(Minecraft.getInstance().gameDirectory.toPath()));
+        } catch (IOException exception) {
+            Planes.LOGGER.error("Could not load saved plane definitions", exception);
+            return new ArrayList<>();
+        }
     }
 
     @SubscribeEvent

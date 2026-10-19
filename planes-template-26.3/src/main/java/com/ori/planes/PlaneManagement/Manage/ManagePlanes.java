@@ -2,7 +2,7 @@
  * @ Author: Lindsay Barton
  * @ Create Time: 2026-10-18 12:52:42
  * @ Modified by: Your name
- * @ Modified time: 2026-10-18 23:26:22
+ * @ Modified time: 2026-10-19 09:43:44
  * @ Description: Class for managing planes within the mod.
  */
 
@@ -11,11 +11,14 @@
 
 package com.ori.planes.PlaneManagement.Manage;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
+import com.ori.planes.Planes;
 import com.ori.planes.PlaneManagement.Create.CreateNewPlane;
 import com.ori.planes.PlaneManagement.PlaneDefinition;
+import com.ori.planes.PlaneManagement.PlaneDefinitionStore;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -63,6 +66,12 @@ public class ManagePlanes extends Screen {
 		minecraft.gui.pushScreenLayer(new CreateNewPlane(worldCreation, existing,
 				name -> planes.stream().noneMatch(plane -> plane.name().equalsIgnoreCase(name)
 						&& (existing == null || !plane.id().equals(existing.id()))), saved -> {
+					try {
+						PlaneDefinitionStore.save(minecraft.gameDirectory.toPath(), saved);
+					} catch (IOException exception) {
+						Planes.LOGGER.error("Could not save plane definition {}", saved.id(), exception);
+						return false;
+					}
 					int index = -1;
 					for (int position = 0; position < planes.size(); position++) {
 						if (planes.get(position).id().equals(saved.id())) {
@@ -77,6 +86,7 @@ public class ManagePlanes extends Screen {
 					}
 					selectedId = saved.id();
 					rebuildWidgets();
+					return true;
 				}));
 	}
 
