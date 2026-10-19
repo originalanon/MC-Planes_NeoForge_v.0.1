@@ -2,7 +2,7 @@
  * @ Author: OriginalAnon (Lindsay Barton)
  * @ Create Time: 2026-10-18 06:19:19
  * @ Modified by: Your name
- * @ Modified time: 2026-10-18 13:13:04
+ * @ Modified time: 2026-10-18 23:16:23
  * @ Description: Screen for browsing plane content within the mod; Shows up before world generation. PoC.
  */
 
@@ -68,6 +68,8 @@ public class PlaneContentScreen extends Screen {
         int detailWidth = width - detailX - 8;
         var modList = new BrowserList(8, 84, modWidth, height - 124);
         contentList = new BrowserList(detailX, 84, detailWidth, height - 124);
+
+        
         for (var mod : mods) {
             var row = new BrowserRow(mod.name(), Component.translatable("planes.menu.mod_summary",
                     mod.id(), mod.entries().size()), () -> {
@@ -81,12 +83,22 @@ public class PlaneContentScreen extends Screen {
         }
         addRenderableWidget(modList);
         addRenderableWidget(contentList);
+
+        addRenderableWidget(Button.builder(Component.translatable("planes.menu.select_all"), button -> {
+            setVisibleContentSelected(true);
+        }).bounds(8, height - 56, modWidth, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("planes.menu.deselect_all"), button -> {
+            setVisibleContentSelected(false);
+        }).bounds(8, height - 28, modWidth, 20).build());
+
         addRenderableWidget(CycleButton.<String>builder(value -> Component.translatable("planes.category." + value), category)
             .withValues(CATEGORIES)
                 .create(8, 56, modWidth, 20, Component.translatable("planes.menu.category"), (button, value) -> {
                     category = value;
                     refreshContent();
                 }));
+
+        
         var search = new EditBox(font, detailX, 56, detailWidth, 20, Component.translatable("planes.menu.search"));
         search.setMaxLength(256);
         search.setHint(Component.translatable("planes.menu.search"));
@@ -96,6 +108,8 @@ public class PlaneContentScreen extends Screen {
             refreshContent();
         });
         addRenderableWidget(search);
+
+
         var name = new EditBox(font, 8, 32, width - 16, 20, Component.translatable("planes.editor.name"));
         name.setMaxLength(64);
         name.setHint(Component.translatable("planes.editor.name"));
@@ -105,6 +119,8 @@ public class PlaneContentScreen extends Screen {
             updateSaveButton();
         });
         addRenderableWidget(name);
+
+
         int buttonWidth = Math.min(150, (width - 24) / 2);
         saveButton = addRenderableWidget(Button.builder(Component.translatable("planes.editor.save"), button -> {
             if (validName()) {
@@ -114,6 +130,8 @@ public class PlaneContentScreen extends Screen {
         }).bounds(width / 2 - buttonWidth - 4, height - 28, buttonWidth, 20).build());
         addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> onClose())
                 .bounds(width / 2 + 4, height - 28, buttonWidth, 20).build());
+
+        
         updateSaveButton();
         refreshContent();
     }
@@ -147,6 +165,19 @@ public class PlaneContentScreen extends Screen {
             contentList.addRow(new BrowserRow(Component.translatable("planes.menu.empty").getString(),
                     Component.empty(), () -> {}));
         }
+    }
+
+    private void setVisibleContentSelected(boolean selected) {
+        for (var row : contentList.children()) {
+            if (row.contentKey != null) {
+                if (selected) {
+                    selectedContent.add(row.contentKey);
+                } else {
+                    selectedContent.remove(row.contentKey);
+                }
+            }
+        }
+        refreshContent();
     }
 
     @Override
@@ -200,6 +231,7 @@ public class PlaneContentScreen extends Screen {
         private final String label;
         private final Component detail;
         private final Runnable onSelect;
+        private ContentKey contentKey;
         private Checkbox checkbox;
 
         BrowserRow(String label, Component detail, Runnable onSelect) {
@@ -210,6 +242,7 @@ public class PlaneContentScreen extends Screen {
 
         BrowserRow(String label, Component detail, ContentKey key) {
             this(label, detail, () -> {});
+            this.contentKey = key;
             this.checkbox = Checkbox.builder(Component.empty(), font)
                     .selected(selectedContent.contains(key)).onValueChange((button, selected) -> {
                         if (selected) {
