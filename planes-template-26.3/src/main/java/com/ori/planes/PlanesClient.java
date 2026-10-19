@@ -19,6 +19,7 @@ import java.util.WeakHashMap;
 
 import com.ori.planes.PlaneManagement.Manage.ManagePlanes;
 import com.ori.planes.PlaneManagement.PlaneDefinition;
+import com.ori.planes.PlaneManagement.PlaneDatapackGenerator;
 import com.ori.planes.PlaneManagement.PlaneDefinitionStore;
 
 import net.minecraft.client.Minecraft;
@@ -75,14 +76,23 @@ public class PlanesClient {
         cancel.setWidth(98);
         event.addListener(Button.builder(Component.translatable("planes.menu.open"), button ->
             Minecraft.getInstance().gui.pushScreenLayer(new ManagePlanes(screen,
-                PLANE_DRAFTS.computeIfAbsent(screen, key -> loadPlaneDefinitions()))))
+                PLANE_DRAFTS.computeIfAbsent(screen, key -> loadPlaneDefinitions(screen)))))
                 .bounds(left + 106, create.getY(), 98, 20).build());
         arrangePlaneButton(screen);
     }
 
-    private static List<PlaneDefinition> loadPlaneDefinitions() {
+    private static List<PlaneDefinition> loadPlaneDefinitions(CreateWorldScreen screen) {
         try {
-            return new ArrayList<>(PlaneDefinitionStore.loadAll(Minecraft.getInstance().gameDirectory.toPath()));
+            List<PlaneDefinition> definitions = new ArrayList<>(
+                    PlaneDefinitionStore.loadAll(Minecraft.getInstance().gameDirectory.toPath()));
+            for (PlaneDefinition definition : definitions) {
+                try {
+                    PlaneDatapackGenerator.generate(screen, definition);
+                } catch (IOException exception) {
+                    Planes.LOGGER.error("Could not stage datapack for saved plane {}", definition.id(), exception);
+                }
+            }
+            return definitions;
         } catch (IOException exception) {
             Planes.LOGGER.error("Could not load saved plane definitions", exception);
             return new ArrayList<>();

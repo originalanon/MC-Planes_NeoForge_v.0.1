@@ -18,6 +18,7 @@ import java.util.UUID;
 import com.ori.planes.Planes;
 import com.ori.planes.PlaneManagement.Create.CreateNewPlane;
 import com.ori.planes.PlaneManagement.PlaneDefinition;
+import com.ori.planes.PlaneManagement.PlaneDatapackGenerator;
 import com.ori.planes.PlaneManagement.PlaneDefinitionStore;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -80,8 +81,23 @@ public class ManagePlanes extends Screen {
 				name -> planes.stream().noneMatch(plane -> plane.name().equalsIgnoreCase(name)
 						&& (existing == null || !plane.id().equals(existing.id()))), saved -> {
 					try {
+						PlaneDatapackGenerator.generate(worldCreation, saved);
+					} catch (IOException exception) {
+						Planes.LOGGER.error("Could not generate datapack for plane {}", saved.id(), exception);
+						return false;
+					}
+					try {
 						PlaneDefinitionStore.save(minecraft.gameDirectory.toPath(), saved);
 					} catch (IOException exception) {
+						try {
+							if (existing == null) {
+								PlaneDatapackGenerator.remove(worldCreation, saved);
+							} else {
+								PlaneDatapackGenerator.generate(worldCreation, existing);
+							}
+						} catch (IOException rollbackException) {
+							exception.addSuppressed(rollbackException);
+						}
 						Planes.LOGGER.error("Could not save plane definition {}", saved.id(), exception);
 						return false;
 					}
@@ -127,17 +143,33 @@ public class ManagePlanes extends Screen {
 	}
 
 	private void deletePlane(UUID planeId) {
+		PlaneDefinition plane = planes.stream().filter(entry -> entry.id().equals(planeId)).findFirst().orElse(null);
+		if (plane == null) {
+			return;
+		}
+		try {
+			PlaneDatapackGenerator.remove(worldCreation, plane);
+		} catch (IOException exception) {
+			Planes.LOGGER.error("Could not remove staged datapack for plane {}", planeId, exception);
+			return;
+		}
 		try {
 			if (!PlaneDefinitionStore.delete(minecraft.gameDirectory.toPath(), planeId)) {
+				PlaneDatapackGenerator.generate(worldCreation, plane);
 				Planes.LOGGER.warn("Plane definition {} was not found on disk; keeping it in the manager", planeId);
 				return;
 			}
 		} catch (IOException exception) {
+			try {
+				PlaneDatapackGenerator.generate(worldCreation, plane);
+			} catch (IOException rollbackException) {
+				exception.addSuppressed(rollbackException);
+			}
 			Planes.LOGGER.error("Could not delete plane definition {}", planeId, exception);
 			return;
 		}
 
-		planes.removeIf(plane -> plane.id().equals(planeId));
+		planes.removeIf(definition -> definition.id().equals(planeId));
 		if (selectedId != null && selectedId.equals(planeId)) {
 			selectedId = null;
 		}

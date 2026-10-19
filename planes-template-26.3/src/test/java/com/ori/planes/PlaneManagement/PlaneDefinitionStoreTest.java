@@ -48,7 +48,7 @@ class PlaneDefinitionStoreTest {
     @Test
     void deleteRemovesOnlyTheRequestedDefinition() throws IOException {
         var first = new PlaneDefinition(UUID.randomUUID(), "First", Set.of(), PlaneType.OVERWORLD);
-        var second = new PlaneDefinition(UUID.randomUUID(), "Second", Set.of(), PlaneType.NETHER);
+        var second = new PlaneDefinition(UUID.randomUUID(), "Second", Set.of(), PlaneType.THE_NETHER);
         PlaneDefinitionStore.save(gameDirectory, first);
         PlaneDefinitionStore.save(gameDirectory, second);
 
