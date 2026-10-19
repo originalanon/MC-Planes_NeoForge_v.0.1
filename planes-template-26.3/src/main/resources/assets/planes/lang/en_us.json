@@ -1,8 +1,6 @@
 {
   "itemGroup.planes": "Example Mod Tab",
   "block.planes.example_block": "Example Block",
- * @ Modified by: Your name
- * @ Modified time: 2026-10-18 22:38:11
   "planes.menu.open": "Planes",
   "planes.menu.title": "Planes: Content Catalog",
   "planes.menu.summary": "%s namespaces / %s matching entries",
@@ -12,6 +10,8 @@
   "planes.menu.empty": "No matching entries",
   "planes.menu.create_plane": "Create Plane",
   "planes.menu.manage_planes": "Manage Plane",
+  "planes.menu.select_all": "Select All",
+  "planes.menu.deselect_all": "Deselect All",
   "planes.manager.title": "Plane Drafts",
   "planes.manager.count": "%s planes",
   "planes.manager.empty": "No planes yet",
@@ -20,6 +20,10 @@
   "planes.editor.edit": "Manage Plane",
   "planes.editor.name": "Plane name",
   "planes.editor.save": "Save Plane",
+  "planes.editor.type": "Plane type",
+  "planes.editor.type.overworld": "Overworld",
+  "planes.editor.type.nether": "Nether",
+  "planes.editor.type.end": "End",
   "planes.editor.summary": "%s matching entries / %s selected",
   "planes.editor.invalid_name": "Enter a plane name",
   "planes.editor.included": "Included",

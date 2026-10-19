@@ -2,7 +2,7 @@
  * @ Author: Lindsay Barton
  * @ Create Time: 2026-10-18 12:49:18
  * @ Modified by: Your name
- * @ Modified time: 2026-10-18 13:08:56
+ * @ Modified time: 2026-10-18 23:33:11
  * @ Description: Class for creating a new plane.
  */
 
@@ -22,5 +22,11 @@ public class CreateNewPlane extends PlaneContentScreen {
 	public CreateNewPlane(CreateWorldScreen worldCreation, PlaneDefinition existing,
 			Predicate<String> nameAvailable, Consumer<PlaneDefinition> onSave) {
 		super(worldCreation, existing, nameAvailable, onSave);
+	}
+
+	//call Plane creation logic - output as a JSON datapack
+	public void createPlane() {
+		// Implement the logic to create a new plane and output it as a JSON datapack
+		System.out.println("Hi there! Creating a new plane...");
 	}
 }

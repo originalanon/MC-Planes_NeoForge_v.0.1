@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-public record PlaneDefinition(UUID id, String name, Set<ContentKey> content) {
+public record PlaneDefinition(UUID id, String name, Set<ContentKey> content, PlaneType type) {
     public PlaneDefinition {
         Objects.requireNonNull(id);
         name = name.strip();
@@ -12,6 +12,8 @@ public record PlaneDefinition(UUID id, String name, Set<ContentKey> content) {
             throw new IllegalArgumentException("A plane must have a name");
         }
         content = Set.copyOf(content);
+        Objects.requireNonNull(type);
+
     }
 
     public record ContentKey(String category, String id) {}

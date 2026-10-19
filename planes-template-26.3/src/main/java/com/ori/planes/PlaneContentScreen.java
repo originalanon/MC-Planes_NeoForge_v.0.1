@@ -2,7 +2,7 @@
  * @ Author: OriginalAnon (Lindsay Barton)
  * @ Create Time: 2026-10-18 06:19:19
  * @ Modified by: Your name
- * @ Modified time: 2026-10-18 23:16:23
+ * @ Modified time: 2026-10-18 23:51:06
  * @ Description: Screen for browsing plane content within the mod; Shows up before world generation. PoC.
  */
 
@@ -124,7 +124,7 @@ public class PlaneContentScreen extends Screen {
         int buttonWidth = Math.min(150, (width - 24) / 2);
         saveButton = addRenderableWidget(Button.builder(Component.translatable("planes.editor.save"), button -> {
             if (validName()) {
-                onSave.accept(new PlaneDefinition(planeId, planeName, selectedContent));
+                onSave.accept(new PlaneDefinition(planeId, planeName, selectedContent, null));
                 onClose();
             }
         }).bounds(width / 2 - buttonWidth - 4, height - 28, buttonWidth, 20).build());
@@ -162,7 +162,7 @@ public class PlaneContentScreen extends Screen {
             }
         }
         if (matchingCount == 0) {
-            contentList.addRow(new BrowserRow(Component.translatable("planes.menu.empty").getString(),
+                contentList.addRow(new BrowserRow(Component.translatable("planes.menu.empty"),
                     Component.empty(), () -> {}));
         }
     }
@@ -229,6 +229,7 @@ public class PlaneContentScreen extends Screen {
 
     private final class BrowserRow extends ObjectSelectionList.Entry<BrowserRow> {
         private final String label;
+        private final Component localizedLabel;
         private final Component detail;
         private final Runnable onSelect;
         private ContentKey contentKey;
@@ -236,6 +237,14 @@ public class PlaneContentScreen extends Screen {
 
         BrowserRow(String label, Component detail, Runnable onSelect) {
             this.label = label;
+            this.localizedLabel = null;
+            this.detail = detail;
+            this.onSelect = onSelect;
+        }
+
+        BrowserRow(Component label, Component detail, Runnable onSelect) {
+            this.label = label.getString();
+            this.localizedLabel = label;
             this.detail = detail;
             this.onSelect = onSelect;
         }
@@ -272,7 +281,8 @@ public class PlaneContentScreen extends Screen {
 
         @Override
         public Component getNarration() {
-                var narration = Component.literal(label).append(" ").append(detail);
+            var narration = (localizedLabel == null ? Component.literal(label) : localizedLabel).copy()
+                .append(" ").append(detail);
                 return checkbox == null ? narration : narration.append(" ").append(Component.translatable(
                     checkbox.selected() ? "planes.editor.included" : "planes.editor.excluded"));
         }
@@ -287,8 +297,12 @@ public class PlaneContentScreen extends Screen {
                 textX += checkbox.getWidth() + 4;
             }
             int textWidth = Math.max(0, getContentRight() - textX);
-            graphics.text(font, font.plainSubstrByWidth(label, textWidth), textX, getContentY() + 2, 0xFFFFFFFF);
-            graphics.text(font, font.plainSubstrByWidth(detail.getString(), textWidth), textX, getContentY() + 14, 0xFFAAAAAA);
+            if (localizedLabel == null) {
+                graphics.text(font, font.plainSubstrByWidth(label, textWidth), textX, getContentY() + 2, 0xFFFFFFFF);
+            } else {
+                graphics.text(font, localizedLabel, textX, getContentY() + 2, 0xFFFFFFFF);
+            }
+            graphics.text(font, detail, textX, getContentY() + 14, 0xFFAAAAAA);
             if (hovered) {
                 graphics.setTooltipForNextFrame(font, getNarration(), mouseX, mouseY);
             }

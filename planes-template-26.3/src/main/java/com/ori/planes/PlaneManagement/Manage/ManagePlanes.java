@@ -2,7 +2,7 @@
  * @ Author: Lindsay Barton
  * @ Create Time: 2026-10-18 12:52:42
  * @ Modified by: Your name
- * @ Modified time: 2026-10-18 13:12:36
+ * @ Modified time: 2026-10-18 23:26:22
  * @ Description: Class for managing planes within the mod.
  */
 
@@ -78,6 +78,15 @@ public class ManagePlanes extends Screen {
 					selectedId = saved.id();
 					rebuildWidgets();
 				}));
+	}
+
+	//Method to delete a plane by its ID
+	private void deletePlane(UUID planeId) {
+		planes.removeIf(plane -> plane.id().equals(planeId));
+		if (selectedId != null && selectedId.equals(planeId)) {
+			selectedId = null;
+		}
+		rebuildWidgets();
 	}
 
 	@Override
