@@ -11,6 +11,14 @@
 
 package com.ori.planes;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
+
+import com.ori.planes.PlaneManagement.Manage.ManagePlanes;
+import com.ori.planes.PlaneManagement.PlaneDefinition;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
@@ -30,6 +38,8 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
 @EventBusSubscriber(modid = Planes.MODID, value = Dist.CLIENT)
 public class PlanesClient {
+    private static final Map<CreateWorldScreen, List<PlaneDefinition>> PLANE_DRAFTS = new WeakHashMap<>();
+
     public PlanesClient(ModContainer container) {
         // Allows NeoForge to create a config screen for this mod's configs.
         // The config screen is accessed by going to the Mods screen > clicking on your mod > clicking on config.
@@ -62,7 +72,8 @@ public class PlanesClient {
         cancel.setX(left + 212);
         cancel.setWidth(98);
         event.addListener(Button.builder(Component.translatable("planes.menu.open"), button ->
-                Minecraft.getInstance().gui.pushScreenLayer(new PlaneContentScreen(screen)))
+            Minecraft.getInstance().gui.pushScreenLayer(new ManagePlanes(screen,
+                PLANE_DRAFTS.computeIfAbsent(screen, key -> new ArrayList<>()))))
                 .bounds(left + 106, create.getY(), 98, 20).build());
         arrangePlaneButton(screen);
     }
