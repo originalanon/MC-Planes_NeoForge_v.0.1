@@ -3,6 +3,7 @@ package com.ori.planes;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
+import com.ori.planes.PlaneManagement.Restrictions.PlaneRoutedBiomeSource;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -66,6 +67,7 @@ public class Planes {
     // The constructor for the mod class is the first code that is run when your mod is loaded.
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
     public Planes(IEventBus modEventBus, ModContainer modContainer) {
+        PlaneRoutedBiomeSource.register(modEventBus);
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
 

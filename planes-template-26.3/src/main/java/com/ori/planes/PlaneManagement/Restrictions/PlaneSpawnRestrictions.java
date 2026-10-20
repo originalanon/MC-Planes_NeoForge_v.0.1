@@ -1,4 +1,4 @@
-package com.ori.planes.PlaneManagement;
+package com.ori.planes.PlaneManagement.Restrictions;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,6 +9,8 @@ import java.util.UUID;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.ori.planes.Planes;
+import com.ori.planes.PlaneManagement.PlaneDefinition;
+import com.ori.planes.PlaneManagement.PlaneType;
 import com.ori.planes.PlaneManagement.PlaneDefinition.ContentKey;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -69,10 +71,11 @@ public final class PlaneSpawnRestrictions extends SimplePreparableReloadListener
             }
         }
         long unsupported = definitions.stream().flatMap(plane -> plane.content().stream())
-                .filter(entry -> !entry.category().equals("entities")).distinct().count();
+                .filter(entry -> !entry.category().equals("entities") && !entry.category().equals("biomes"))
+                .distinct().count();
         if (unsupported > 0) {
-            Planes.LOGGER.warn("{} selected non-entity entries have no exclusion enforcement yet; "
-                    + "this build restricts natural/chunk-generation mob spawns only", unsupported);
+            Planes.LOGGER.warn("{} selected entries have no exclusion enforcement yet; supported categories are "
+                    + "natural/chunk-generation entity spawns and datapack-routed biome sources", unsupported);
         }
         Planes.LOGGER.info("Loaded entity exclusion routes from {} enabled plane definitions", definitions.size());
         return new PlaneContentPolicy(definitions);

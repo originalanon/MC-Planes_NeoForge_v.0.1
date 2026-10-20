@@ -85,12 +85,10 @@ public class PlanesClient {
         try {
             List<PlaneDefinition> definitions = new ArrayList<>(
                     PlaneDefinitionStore.loadAll(Minecraft.getInstance().gameDirectory.toPath()));
-            for (PlaneDefinition definition : definitions) {
-                try {
-                    PlaneDatapackGenerator.generate(screen, definition);
-                } catch (IOException exception) {
-                    Planes.LOGGER.error("Could not stage datapack for saved plane {}", definition.id(), exception);
-                }
+            try {
+                PlaneDatapackGenerator.generateAll(screen, definitions);
+            } catch (IOException exception) {
+                Planes.LOGGER.error("Could not generate the plane biome-routing bundle", exception);
             }
             return definitions;
         } catch (IOException exception) {

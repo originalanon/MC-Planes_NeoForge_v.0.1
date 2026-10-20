@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 import com.ori.planes.PlaneManagement.PlaneDefinition.ContentKey;
+import com.ori.planes.PlaneManagement.Restrictions.PlaneContentPolicy;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

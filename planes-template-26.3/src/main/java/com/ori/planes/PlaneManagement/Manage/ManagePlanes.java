@@ -2,7 +2,7 @@
  * @ Author: Lindsay Barton
  * @ Create Time: 2026-10-18 12:52:42
  * @ Modified by: Your name
- * @ Modified time: 2026-10-19 11:22:00
+ * @ Modified time: 2026-10-20 10:31:00
  * @ Description: Class for managing planes within the mod.
  */
 
@@ -81,7 +81,10 @@ public class ManagePlanes extends Screen {
 				name -> planes.stream().noneMatch(plane -> plane.name().equalsIgnoreCase(name)
 						&& (existing == null || !plane.id().equals(existing.id()))), saved -> {
 					try {
-						PlaneDatapackGenerator.generate(worldCreation, saved);
+						var definitions = new java.util.ArrayList<>(planes);
+						definitions.removeIf(plane -> plane.id().equals(saved.id()));
+						definitions.add(saved);
+						PlaneDatapackGenerator.generateAll(worldCreation, definitions);
 					} catch (IOException exception) {
 						Planes.LOGGER.error("Could not generate datapack for plane {}", saved.id(), exception);
 						return false;

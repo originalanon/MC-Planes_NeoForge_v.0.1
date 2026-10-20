@@ -1,4 +1,4 @@
-package com.ori.planes.PlaneManagement;
+package com.ori.planes.PlaneManagement.Restrictions;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.ori.planes.PlaneManagement.PlaneDefinition;
 import com.ori.planes.PlaneManagement.PlaneDefinition.ContentKey;
 
 public final class PlaneContentPolicy {
