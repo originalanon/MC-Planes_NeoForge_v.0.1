@@ -53,6 +53,29 @@ class PlaneDefinitionTest {
     }
 
     @Test
+    void planeSeedIsStableAcrossReconstructionAndRenaming() {
+        UUID id = UUID.fromString("01234567-89ab-cdef-0123-456789abcdef");
+        var original = new PlaneDefinition(id, "Original", Set.of(), PlaneType.OVERWORLD);
+        var renamed = new PlaneDefinition(id, "Renamed", Set.of(), PlaneType.OVERWORLD);
+
+        assertEquals(original.seedForWorld(42L), renamed.seedForWorld(42L));
+        assertEquals(original.seedForWorld(42L), original.seedForWorld(42L));
+        assertNotEquals(42L, original.seedForWorld(42L));
+    }
+
+    @Test
+    void planeSeedDependsOnWorldSeedAndBothUuidHalves() {
+        var original = new PlaneDefinition(new UUID(1L, 2L), "Original", Set.of(), PlaneType.OVERWORLD);
+        var differentHighBits = new PlaneDefinition(new UUID(3L, 2L), "High", Set.of(), PlaneType.OVERWORLD);
+        var differentLowBits = new PlaneDefinition(new UUID(1L, 3L), "Low", Set.of(), PlaneType.OVERWORLD);
+
+        assertNotEquals(original.seedForWorld(42L), original.seedForWorld(43L));
+        assertNotEquals(original.seedForWorld(42L), differentHighBits.seedForWorld(42L));
+        assertNotEquals(original.seedForWorld(42L), differentLowBits.seedForWorld(42L));
+        assertNotEquals(original.seedForWorld(Long.MIN_VALUE), original.seedForWorld(Long.MAX_VALUE));
+    }
+
+    @Test
     void editingACopyDoesNotChangeSavedPlane() {
         var original = new PlaneDefinition(UUID.randomUUID(), "Original", Set.of(), PlaneType.OVERWORLD);
         var selections = new HashSet<>(original.content());
